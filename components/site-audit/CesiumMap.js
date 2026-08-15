@@ -16,6 +16,9 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
     async function initializeCesium() {
       const Cesium = await import("cesium");
       if (cancelled || !containerRef.current) return;
+
+      const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+      if (ionToken) Cesium.Ion.defaultAccessToken = ionToken;
       cesiumRef.current = Cesium;
 
       const viewer = new Cesium.Viewer(containerRef.current, {
