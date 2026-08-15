@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
-const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChange }, ref) {
+const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChange, onGeometryChange }, ref) {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const cesiumRef = useRef(null);
@@ -52,6 +52,7 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
     if (!viewer) return;
     drawingEntitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
     drawingEntitiesRef.current = [];
+    onGeometryChange?.(null);
   }
 
   async function locate(query) {
@@ -122,22 +123,30 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
       drawingHandlerRef.current = null;
 
       const cartographics = positions.map((position) => Cesium.Cartographic.fromCartesian(position));
-      let perimeterMeters = 0;
-      for (let index = 0; index < cartographics.length; index += 1) {
-        const next = (index + 1) % cartographics.length;
-        perimeterMeters += new Cesium.EllipsoidGeodesic(cartographics[index], cartographics[next]).surfaceDistance;
-      }
+      const perimeterMeters = cartographics.reduce((total, current, index) => {
+        const next = cartographics[(index + 1) % cartographics.length];
+        return total + new Cesium.EllipsoidGeodesic(current, next).surfaceDistance;
+      }, 0);
 
       const centerLatitude = cartographics.reduce((sum, point) => sum + point.latitude, 0) / cartographics.length;
       const radius = Cesium.Ellipsoid.WGS84.maximumRadius;
-      const projected = cartographics.map((point) => ({ x: radius * point.longitude * Math.cos(centerLatitude), y: radius * point.latitude }));
+      const projected = cartographics.map((point) => ({
+        longitude: Cesium.Math.toDegrees(point.longitude),
+        latitude: Cesium.Math.toDegrees(point.latitude),
+        x: radius * point.longitude * Math.cos(centerLatitude),
+        y: radius * point.latitude
+      }));
+
       let signedArea = 0;
       for (let index = 0; index < projected.length; index += 1) {
         const next = (index + 1) % projected.length;
         signedArea += projected[index].x * projected[next].y - projected[next].x * projected[index].y;
       }
-      const areaSquareMeters = Math.abs(signedArea) / 2;
 
+      const areaSquareMeters = Math.abs(signedArea) / 2;
+      const geometry = projected.map(({ longitude, latitude }) => [longitude, latitude]);
+
+      onGeometryChange?.(geometry);
       onMetricsChange?.({ perimeterMeters, areaSquareMeters });
       onStatusChange?.("Perimeter defined");
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
