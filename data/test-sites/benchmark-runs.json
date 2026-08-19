@@ -1,0 +1,12 @@
+{
+  "benchmarkId": "cz-industrial-001",
+  "version": "0.1",
+  "countryCode": "cz",
+  "sites": [
+    {"id":"cz-skoda-mlada-boleslav","name":"Škoda Auto Mladá Boleslav","address":"tř. Václava Klementa 869, 293 01 Mladá Boleslav, Czech Republic"},
+    {"id":"cz-hyundai-nosovice","name":"Hyundai Motor Manufacturing Czech — Nošovice","address":"Hyundai 700/1, 739 51 Nižní Lhoty, Czech Republic"},
+    {"id":"cz-continental-barum-otrokovice","name":"Continental Barum — Otrokovice","address":"Objízdná 1628, 765 02 Otrokovice, Czech Republic"}
+  ],
+  "pipeline": ["site_discovery","boundary_proposal","geo_audit","observation_classification","autonomy_scoring","engineering_readiness","product_matching"],
+  "metrics": ["site_found","boundary_confidence","feature_count","access_candidates","barrier_candidates","parking_candidates","review_items","mandatory_validation","engineering_questions","verified_product_candidates"]
+}
