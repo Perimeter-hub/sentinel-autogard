@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import EvidencePanel from "./EvidencePanel";
 import FindingPanel from "./FindingPanel";
 import OpportunityPanel from "./OpportunityPanel";
@@ -11,7 +11,7 @@ import SecurityObjectPanel from "./SecurityObjectPanel";
 const CesiumMap = dynamic(() => import("./CesiumMap"), { ssr: false });
 
 export default function SiteAuditWorkspace() {
-  const mapRef = useState(null)[0];
+  const mapRef = useRef(null);
   const [query, setQuery] = useState("");
   const [siteGeometry, setSiteGeometry] = useState(null);
   const [detectedBoundary, setDetectedBoundary] = useState(null);
@@ -44,11 +44,7 @@ export default function SiteAuditWorkspace() {
     finally { setAnalyzing(false); }
   }
 
-  async function acceptBoundary() {
-    const accepted = mapRef.current?.acceptDetectedBoundary();
-    if (!accepted) return setStatus("Detected boundary is unavailable");
-    setDetectedBoundary(null); setStatus("Detected boundary accepted — analyzing site context..."); await runInitialGeoAudit(accepted);
-  }
+  async function acceptBoundary() { const accepted = mapRef.current?.acceptDetectedBoundary(); if (!accepted) return setStatus("Detected boundary is unavailable"); setDetectedBoundary(null); setStatus("Detected boundary accepted — analyzing site context..."); await runInitialGeoAudit(accepted); }
   function editBoundary() { setStatus("Edit mode: redraw the site boundary"); mapRef.current?.startPolygonDrawing(); setDetectedBoundary(null); setContext(null); }
   function drawPerimeter() { setStatus("Drawing site boundary"); mapRef.current?.startPolygonDrawing(); setContext(null); }
   function clearAudit() { mapRef.current?.clearDrawings(); setSiteGeometry(null); setDetectedBoundary(null); setSiteId(null); setSiteLocation(null); setContext(null); setFindingId(null); setEvidenceId(null); setMetrics({ perimeterMeters: null, areaSquareMeters: null }); setStatus("Ready for site discovery"); }
