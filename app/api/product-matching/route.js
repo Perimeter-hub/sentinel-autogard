@@ -1,22 +1,57 @@
 import { NextResponse } from "next/server";
 import products from "../../../data/autogard/products.json";
-
-const FINDING_RULES = {
-  "Uncontrolled Vehicle Access": ["AG500", "AG900", "AGF3", "AGM1"],
-  "Vehicle access control modernization": ["AG500", "AG900", "AGF3", "AGM1"],
-  "Weak Pedestrian Access": ["Tripod-Turnstile"],
-  "Pedestrian access modernization opportunity": ["Tripod-Turnstile"],
-  "CCTV coverage assessment": [],
-  "ANPR integration assessment": ["AG500", "AG900", "AGF3", "AGM1", "EcoPark-II"],
-  "Vehicle barrier modernization opportunity": ["AG500", "AG900", "AGF3", "AGM1"],
-  "Perimeter protection assessment": [],
-  "Parking system opportunity": ["EcoPark-II"]
-};
+import rules from "../../../data/autogard/solution-rules.json";
 
 export async function GET(request) {
-  const findingType = new URL(request.url).searchParams.get("findingType");
+  const params = new URL(request.url).searchParams;
+  const findingType = params.get("findingType") || "";
+  const objectType = params.get("objectType") || "";
+  const siteConditions = (params.get("siteConditions") || "").split(",").map((value) => value.trim()).filter(Boolean);
+  const trafficIntensity = params.get("trafficIntensity") || "";
+
   if (!findingType) return NextResponse.json({ error: "findingType is required" }, { status: 400 });
-  const productIds = FINDING_RULES[findingType] || [];
-  const data = products.filter((product) => productIds.includes(product.productId));
-  return NextResponse.json({ data, count: data.length, matchingBasis: productIds.length ? "verified_catalog_rule" : "no_verified_match" });
+
+  const applicableRules = rules.filter((rule) =>
+    rule.findingTypes.includes(findingType) &&
+    (!objectType || rule.requiredObjectTypes.includes(objectType))
+  );
+
+  const data = products.map((product) => {
+    let score = 0;
+    const reasons = [];
+    const matchingRules = applicableRules.filter((rule) => rule.preferredCategories.includes(product.category));
+    score += matchingRules.length * 30;
+
+    for (const condition of siteConditions) {
+      if (product.applicationTags?.includes(condition)) {
+        score += 15;
+        reasons.push(`Application match: ${condition}`);
+      }
+    }
+
+    if (trafficIntensity && product.applicationTags?.includes(trafficIntensity)) {
+      score += 20;
+      reasons.push(`Traffic match: ${trafficIntensity}`);
+    }
+
+    if (matchingRules.length) reasons.push(...matchingRules.map((rule) => `Rule match: ${rule.ruleId}`));
+
+    return {
+      productId: product.productId,
+      name: product.name,
+      category: product.category,
+      score,
+      confidenceBand: score >= 60 ? "strong_candidate" : score >= 30 ? "candidate" : "weak_candidate",
+      reasons,
+      specifications: product.specifications || {},
+      features: product.features || [],
+      sourceUrl: product.sourceUrl
+    };
+  }).filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
+
+  return NextResponse.json({
+    data,
+    matchingBasis: data.length ? "verified_catalog_rule_and_site_context" : "no_verified_match",
+    context: { findingType, objectType, siteConditions, trafficIntensity }
+  });
 }
