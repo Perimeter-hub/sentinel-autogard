@@ -77,10 +77,8 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
     const Cesium = cesiumRef.current;
     const viewer = viewerRef.current;
     if (!Cesium || !viewer || !boundingBox || boundingBox.length !== 4) return null;
-
     const [south, north, west, east] = boundingBox.map(Number);
     if (![south, north, west, east].every(Number.isFinite) || south >= north || west >= east) return null;
-
     if (detectedBoundaryRef.current) removeEntity(detectedBoundaryRef.current);
     const geometry = [[west, south], [east, south], [east, north], [west, north]];
     detectedBoundaryRef.current = renderBoundary(geometry, { color: Cesium.Color.YELLOW, alpha: 0.12 });
@@ -90,15 +88,19 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
   }
 
   function acceptDetectedBoundary() {
-    const geometry = detectedBoundaryRef.current?.polygon?.hierarchy?.getValue?.(Cesium.JulianDate.now());
+    const entity = detectedBoundaryRef.current;
     const Cesium = cesiumRef.current;
-    if (!geometry || !Cesium) return false;
-    const positions = geometry.positions || [];
+    if (!entity || !Cesium) return false;
+    const hierarchy = entity.polygon?.hierarchy?.getValue?.(Cesium.JulianDate.now());
+    const positions = hierarchy?.positions || [];
+    if (positions.length < 3) return false;
     const coordinates = positions.map((position) => {
       const cartographic = Cesium.Cartographic.fromCartesian(position);
       return [Cesium.Math.toDegrees(cartographic.longitude), Cesium.Math.toDegrees(cartographic.latitude)];
     });
-    return finalizeGeometry(coordinates, "Detected boundary accepted");
+    if (!finalizeGeometry(coordinates, "Detected boundary accepted")) return false;
+    onBoundaryDetected?.(coordinates);
+    return true;
   }
 
   function finalizeGeometry(coordinates, status = "Site boundary defined") {
