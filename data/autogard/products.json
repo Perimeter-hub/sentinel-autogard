@@ -1,0 +1,56 @@
+[
+  {
+    "productId": "AG500",
+    "name": "AG500 Automatic Barrier",
+    "category": "vehicle_barrier",
+    "applicationTags": ["industrial_area", "administrative_area", "hotel", "parking", "continuous_operation"],
+    "specifications": {"armLengthM": "3-5", "openingTimeSeconds": "from 2.5", "operatingTemperatureC": "-20 to +70", "serviceLifeYears": "15+", "cyclesPerDay": "10000+"},
+    "sourceUrl": "https://www.autogard.cz/en/products/barrier-gates/ag500-barrier-for-normal-operation/",
+    "verifiedAt": "2026-08-19"
+  },
+  {
+    "productId": "AG900",
+    "name": "AG900 Robust Automatic Safety Barrier",
+    "category": "vehicle_barrier",
+    "applicationTags": ["industrial_area", "driveway", "intensive_traffic", "continuous_operation"],
+    "specifications": {"armLengthM": "up to 9", "openingTimeSeconds": "from 4", "operatingTemperatureC": "-20 to +70", "serviceLifeYears": "15+", "cyclesPerDay": "around 3000"},
+    "sourceUrl": "https://www.autogard.cz/en/products/barrier-gates/robust-barrier-ag900/",
+    "verifiedAt": "2026-08-19"
+  },
+  {
+    "productId": "AGF3",
+    "name": "AGF3 Intensive Operation Barrier",
+    "category": "vehicle_barrier",
+    "applicationTags": ["high_traffic", "parking", "industrial_area", "continuous_operation"],
+    "specifications": {"openingTimeSeconds": "around 1"},
+    "sourceUrl": "https://www.autogard.cz/en/",
+    "verifiedAt": "2026-08-19"
+  },
+  {
+    "productId": "AGM1",
+    "name": "AGM1 Very Intensive Operation Barrier",
+    "category": "vehicle_barrier",
+    "applicationTags": ["very_high_traffic", "parking", "near_continuous_operation"],
+    "specifications": {"useCase": "high-speed parking barrier"},
+    "sourceUrl": "https://www.autogard.cz/en/",
+    "verifiedAt": "2026-08-19"
+  },
+  {
+    "productId": "EcoPark-II",
+    "name": "EcoPark II Parking System",
+    "category": "parking_system",
+    "applicationTags": ["parking", "public_parking", "hotel", "shopping_centre", "sports_complex", "airport"],
+    "features": ["barcode", "LPR", "remote_management", "payment", "central_control"],
+    "sourceUrl": "https://www.autogard.cz/en/",
+    "verifiedAt": "2026-08-19"
+  },
+  {
+    "productId": "Tripod-Turnstile",
+    "name": "Universal Tripod Turnstile",
+    "category": "pedestrian_access",
+    "applicationTags": ["entrance_control", "reception", "exhibition", "industrial_site", "high_security"],
+    "features": ["bidirectional", "people_counting", "access_identification"],
+    "sourceUrl": "https://www.autogard.cz/",
+    "verifiedAt": "2026-08-19"
+  }
+]
