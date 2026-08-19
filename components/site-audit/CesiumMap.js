@@ -8,6 +8,7 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
   const viewerRef = useRef(null);
   const cesiumRef = useRef(null);
   const drawingHandlerRef = useRef(null);
+  const mapSelectionHandlerRef = useRef(null);
   const drawingEntitiesRef = useRef([]);
 
   useEffect(() => {
@@ -34,9 +35,7 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
       });
 
       viewerRef.current = viewer;
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(8.2275, 46.8182, 550000)
-      });
+      viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(8.2275, 46.8182, 550000) });
     }
 
     initializeCesium();
@@ -44,6 +43,7 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
     return () => {
       cancelled = true;
       drawingHandlerRef.current?.destroy();
+      mapSelectionHandlerRef.current?.destroy();
       if (viewerRef.current && !viewerRef.current.isDestroyed()) viewerRef.current.destroy();
     };
   }, []);
@@ -66,17 +66,21 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
     const coordinateMatch = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*[,; ]\s*(-?\d+(?:\.\d+)?)$/);
     let longitude;
     let latitude;
+    let displayName = query.trim();
 
     if (coordinateMatch) {
       latitude = Number(coordinateMatch[1]);
       longitude = Number(coordinateMatch[2]);
     } else {
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ch&q=${encodeURIComponent(query)}`);
-        const results = await response.json();
-        if (!results.length) return false;
-        latitude = Number(results[0].lat);
-        longitude = Number(results[0].lon);
+        const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+        if (!response.ok) return false;
+        const result = await response.json();
+        if (!result.data?.length) return false;
+        const first = result.data[0];
+        latitude = Number(first.latitude);
+        longitude = Number(first.longitude);
+        displayName = first.displayName || displayName;
       } catch {
         return false;
       }
@@ -86,7 +90,37 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
       destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 2500),
       duration: 1.8
     });
-    return true;
+
+    return { latitude, longitude, displayName };
+  }
+
+  function enableMapSelection() {
+    const Cesium = cesiumRef.current;
+    const viewer = viewerRef.current;
+    if (!Cesium || !viewer) return;
+
+    mapSelectionHandlerRef.current?.destroy();
+    onStatusChange?.("Click the map to select a site location");
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    mapSelectionHandlerRef.current = handler;
+    handler.setInputAction((movement) => {
+      const position = viewer.camera.pickEllipsoid(movement.position, viewer.scene.globe.ellipsoid);
+      if (!position) return;
+      const cartographic = Cesium.Cartographic.fromCartesian(position);
+      const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+      const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+      const marker = viewer.entities.add({
+        position,
+        point: { pixelSize: 11, color: Cesium.Color.CYAN, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 }
+      });
+      drawingEntitiesRef.current.push(marker);
+      handler.destroy();
+      mapSelectionHandlerRef.current = null;
+      onStatusChange?.("Map location selected — define the site boundary");
+      onGeometryChange?.(null);
+      this?.onLocationSelected?.({ latitude, longitude, displayName: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` });
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
   function startPolygonDrawing() {
@@ -96,7 +130,7 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
 
     clearDrawings();
     onMetricsChange?.({ perimeterMeters: null, areaSquareMeters: null });
-    onStatusChange?.("Click perimeter vertices; double-click to finish");
+    onStatusChange?.("Click boundary vertices; double-click to finish");
 
     const positions = [];
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -151,11 +185,11 @@ const CesiumMap = forwardRef(function CesiumMap({ onMetricsChange, onStatusChang
 
       onGeometryChange?.(geometry);
       onMetricsChange?.({ perimeterMeters, areaSquareMeters });
-      onStatusChange?.("Perimeter defined");
+      onStatusChange?.("Site boundary defined");
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
   }
 
-  useImperativeHandle(ref, () => ({ locate, startPolygonDrawing, clearDrawings }));
+  useImperativeHandle(ref, () => ({ locate, startPolygonDrawing, clearDrawings, enableMapSelection }));
 
   return <div ref={containerRef} className="cesium-container" aria-label="Site Audit geospatial viewer" />;
 });
