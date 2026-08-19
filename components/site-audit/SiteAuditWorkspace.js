@@ -15,9 +15,11 @@ export default function SiteAuditWorkspace() {
   const [detectedBoundary, setDetectedBoundary] = useState(null);
   const [siteId, setSiteId] = useState(null);
   const [siteLocation, setSiteLocation] = useState(null);
+  const [context, setContext] = useState(null);
   const [metrics, setMetrics] = useState({ perimeterMeters: null, areaSquareMeters: null });
   const [status, setStatus] = useState("Ready for site discovery");
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [findingId, setFindingId] = useState(null);
 
   async function discoverSite() {
@@ -30,31 +32,56 @@ export default function SiteAuditWorkspace() {
     }
     setSiteLocation(found);
     setSiteGeometry(null);
+    setContext(null);
     setMetrics({ perimeterMeters: null, areaSquareMeters: null });
     setSiteId(null);
     setFindingId(null);
     setStatus(found.boundingBox ? "Site located — review the detected boundary" : "Site located — define the site boundary");
   }
 
-  function acceptBoundary() {
-    const accepted = mapRef.current?.acceptDetectedBoundary();
-    if (accepted) {
-      setStatus("Detected boundary accepted — ready for Digital Site Twin");
-      setDetectedBoundary(null);
-    } else {
-      setStatus("Detected boundary is unavailable");
+  async function runInitialGeoAudit(geometry) {
+    if (!geometry || geometry.length < 3) return;
+    const longitudes = geometry.map(([longitude]) => longitude);
+    const latitudes = geometry.map(([, latitude]) => latitude);
+    const bbox = [Math.min(...latitudes), Math.min(...longitudes), Math.max(...latitudes), Math.max(...longitudes)].join(",");
+    setAnalyzing(true);
+    setStatus("Running initial Geo Audit...");
+    try {
+      const response = await fetch(`/api/site-context?bbox=${encodeURIComponent(bbox)}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Site context analysis failed");
+      setContext(result);
+      setStatus("Initial Geo Audit complete — review site context");
+    } catch (error) {
+      console.error(error);
+      setStatus("Boundary accepted — Geo Audit requires a smaller or available analysis area");
+    } finally {
+      setAnalyzing(false);
     }
+  }
+
+  async function acceptBoundary() {
+    const accepted = mapRef.current?.acceptDetectedBoundary();
+    if (!accepted) {
+      setStatus("Detected boundary is unavailable");
+      return;
+    }
+    setDetectedBoundary(null);
+    setStatus("Detected boundary accepted — analyzing site context...");
+    await runInitialGeoAudit(accepted);
   }
 
   function editBoundary() {
     setStatus("Edit mode: redraw the site boundary");
     mapRef.current?.startPolygonDrawing();
     setDetectedBoundary(null);
+    setContext(null);
   }
 
   function drawPerimeter() {
     setStatus("Drawing site boundary");
     mapRef.current?.startPolygonDrawing();
+    setContext(null);
   }
 
   function clearAudit() {
@@ -63,6 +90,7 @@ export default function SiteAuditWorkspace() {
     setDetectedBoundary(null);
     setSiteId(null);
     setSiteLocation(null);
+    setContext(null);
     setFindingId(null);
     setMetrics({ perimeterMeters: null, areaSquareMeters: null });
     setStatus("Ready for site discovery");
@@ -91,7 +119,7 @@ export default function SiteAuditWorkspace() {
           perimeterMeters: metrics.perimeterMeters,
           areaSquareMeters: metrics.areaSquareMeters,
           perimeter: siteGeometry,
-          metadata: { source: "address-driven-site-discovery", market: "Switzerland", searchQuery: query.trim(), discoveredLocation: siteLocation }
+          metadata: { source: "address-driven-site-discovery", market: "Switzerland", searchQuery: query.trim(), discoveredLocation: siteLocation, initialGeoAudit: context }
         })
       });
       if (!response.ok) throw new Error("Save failed");
@@ -131,6 +159,10 @@ export default function SiteAuditWorkspace() {
           {siteLocation && <div className="discovery-card"><strong>Site Discovery</strong><span>{siteLocation.displayName || query}</span><span>{Number(siteLocation.latitude).toFixed(6)}, {Number(siteLocation.longitude).toFixed(6)}</span></div>}
           {detectedBoundary && !siteGeometry && <div className="boundary-card"><strong>Detected Site Boundary</strong><span>Initial boundary generated from geospatial bounding data.</span><div className="boundary-actions"><button type="button" className="primary-button" onClick={acceptBoundary}>Accept Boundary</button><button type="button" onClick={editBoundary}>Edit Boundary</button><button type="button" onClick={drawPerimeter}>Draw Manually</button></div></div>}
           <div className="site-data"><span>Status</span><strong>{status}</strong><span>Market</span><strong>Switzerland</strong><span>Site ID</span><strong>{siteId || "Not created"}</strong><span>Perimeter</span><strong>{perimeter}</strong><span>Area</span><strong>{area}</strong></div>
+
+          {context && <section className="context-card"><div className="context-title"><strong>Initial Geo Audit</strong><span>{context.source}</span></div><div className="context-grid"><span>Buildings</span><strong>{context.counts.buildings}</strong><span>Roads</span><strong>{context.counts.roads}</strong><span>Barriers</span><strong>{context.counts.barriers}</strong><span>Parking areas</span><strong>{context.counts.parkingAreas}</strong><span>Entrances</span><strong>{context.counts.entrances}</strong></div><p className="tool-hint">These are mapped features from the current evidence source. They are context signals, not confirmed security findings.</p></section>}
+          {analyzing && <p className="tool-hint">Analyzing mapped site context...</p>}
+
           {siteId && <><SecurityObjectPanel siteId={siteId} /><FindingPanel siteId={siteId} onCreated={(finding) => setFindingId(finding.id)} /><OpportunityPanel siteId={siteId} findingId={findingId} /></>}
         </aside>
         <div className="map-panel"><CesiumMap ref={mapRef} onMetricsChange={setMetrics} onStatusChange={setStatus} onGeometryChange={setSiteGeometry} onLocationSelected={setSiteLocation} onBoundaryDetected={setDetectedBoundary} /></div>
