@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
+import FindingPanel from "./FindingPanel";
+import OpportunityPanel from "./OpportunityPanel";
 
 const CesiumMap = dynamic(() => import("./CesiumMap"), { ssr: false });
 
@@ -9,9 +11,11 @@ export default function SiteAuditWorkspace() {
   const mapRef = useRef(null);
   const [query, setQuery] = useState("Zurich Airport");
   const [siteGeometry, setSiteGeometry] = useState(null);
+  const [siteId, setSiteId] = useState(null);
   const [metrics, setMetrics] = useState({ perimeterMeters: null, areaSquareMeters: null });
   const [status, setStatus] = useState("Draft audit");
   const [saving, setSaving] = useState(false);
+  const [findingId, setFindingId] = useState(null);
 
   async function locateSite() {
     setStatus("Locating site...");
@@ -27,6 +31,8 @@ export default function SiteAuditWorkspace() {
   function clearAudit() {
     mapRef.current?.clearDrawings();
     setSiteGeometry(null);
+    setSiteId(null);
+    setFindingId(null);
     setMetrics({ perimeterMeters: null, areaSquareMeters: null });
     setStatus("Draft audit");
   }
@@ -66,7 +72,8 @@ export default function SiteAuditWorkspace() {
 
       if (!response.ok) throw new Error("Save failed");
       const result = await response.json();
-      setStatus(`Site saved: ${result.data.id}`);
+      setSiteId(result.data.id);
+      setStatus("Site saved");
     } catch (error) {
       console.error(error);
       setStatus("Unable to save site");
@@ -106,9 +113,14 @@ export default function SiteAuditWorkspace() {
           <div className="site-data">
             <span>Status</span><strong>{status}</strong>
             <span>Market</span><strong>Switzerland</strong>
+            <span>Site ID</span><strong>{siteId || "Not saved"}</strong>
             <span>Perimeter</span><strong>{perimeter}</strong>
             <span>Area</span><strong>{area}</strong>
           </div>
+          {siteId && <>
+            <FindingPanel siteId={siteId} onCreated={(finding) => setFindingId(finding.id)} />
+            <OpportunityPanel siteId={siteId} findingId={findingId} />
+          </>}
         </aside>
 
         <div className="map-panel">
