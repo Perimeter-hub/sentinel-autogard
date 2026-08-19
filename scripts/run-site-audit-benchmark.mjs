@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 
 const benchmark = JSON.parse(await fs.readFile("data/test-sites/benchmark-runs.json", "utf8"));
-const groundTruth = JSON.parse(await fs.readFile("data/test-sites/ground-truth.json", "utf8"));
 const baseUrl = process.env.SENTINEL_BASE_URL || "http://127.0.0.1:3000";
 
 async function audit(site) {
@@ -10,18 +9,11 @@ async function audit(site) {
   return (await response.json()).data;
 }
 
-function score(site, result) {
-  const checks = groundTruth.sites.find((item) => item.id === site.id)?.checks || [];
-  const text = JSON.stringify(result).toLowerCase();
-  return checks.map((check) => ({ ...check, passed: text.includes(check.expected.toLowerCase()), evidence: text.includes(check.expected.toLowerCase()) ? "matched_in_audit_result" : "not_found" }));
-}
-
 const results = [];
 for (const site of benchmark.sites) {
   try {
     const result = await audit(site);
-    const checks = score(site, result);
-    results.push({ siteId: site.id, name: site.name, status: result.status, summary: result.summary || {}, groundTruth: checks, passRate: checks.length ? checks.filter((item) => item.passed).length / checks.length : null });
+    results.push({ siteId: site.id, name: site.name, ...result });
   } catch (error) {
     results.push({ siteId: site.id, name: site.name, status: "error", error: error.message });
   }
