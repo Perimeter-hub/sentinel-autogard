@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 import FindingPanel from "./FindingPanel";
 import OpportunityPanel from "./OpportunityPanel";
+import SecurityObjectPanel from "./SecurityObjectPanel";
 
 const CesiumMap = dynamic(() => import("./CesiumMap"), { ssr: false });
 
@@ -118,6 +119,7 @@ export default function SiteAuditWorkspace() {
             <span>Area</span><strong>{area}</strong>
           </div>
           {siteId && <>
+            <SecurityObjectPanel siteId={siteId} />
             <FindingPanel siteId={siteId} onCreated={(finding) => setFindingId(finding.id)} />
             <OpportunityPanel siteId={siteId} findingId={findingId} />
           </>}
