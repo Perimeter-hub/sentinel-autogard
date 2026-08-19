@@ -10,22 +10,33 @@ const CesiumMap = dynamic(() => import("./CesiumMap"), { ssr: false });
 
 export default function SiteAuditWorkspace() {
   const mapRef = useRef(null);
-  const [query, setQuery] = useState("Zurich Airport");
+  const [query, setQuery] = useState("");
   const [siteGeometry, setSiteGeometry] = useState(null);
   const [siteId, setSiteId] = useState(null);
+  const [siteLocation, setSiteLocation] = useState(null);
   const [metrics, setMetrics] = useState({ perimeterMeters: null, areaSquareMeters: null });
-  const [status, setStatus] = useState("Draft audit");
+  const [status, setStatus] = useState("Ready for site discovery");
   const [saving, setSaving] = useState(false);
   const [findingId, setFindingId] = useState(null);
 
-  async function locateSite() {
-    setStatus("Locating site...");
+  async function discoverSite() {
+    if (!query.trim()) return;
+    setStatus("Discovering site...");
     const found = await mapRef.current?.locate(query);
-    setStatus(found ? "Site located" : "Location not found");
+    if (!found) {
+      setStatus("Site not found");
+      return;
+    }
+    setSiteLocation(found);
+    setSiteGeometry(null);
+    setMetrics({ perimeterMeters: null, areaSquareMeters: null });
+    setSiteId(null);
+    setFindingId(null);
+    setStatus("Site located — review and define the site boundary");
   }
 
   function drawPerimeter() {
-    setStatus("Drawing perimeter");
+    setStatus("Drawing site boundary");
     mapRef.current?.startPolygonDrawing();
   }
 
@@ -33,19 +44,20 @@ export default function SiteAuditWorkspace() {
     mapRef.current?.clearDrawings();
     setSiteGeometry(null);
     setSiteId(null);
+    setSiteLocation(null);
     setFindingId(null);
     setMetrics({ perimeterMeters: null, areaSquareMeters: null });
-    setStatus("Draft audit");
+    setStatus("Ready for site discovery");
   }
 
   async function saveSite() {
     if (!siteGeometry || siteGeometry.length < 3) {
-      setStatus("Define a perimeter before saving");
+      setStatus("Define a site boundary before saving");
       return;
     }
 
     setSaving(true);
-    setStatus("Saving site...");
+    setStatus("Creating Digital Site Twin...");
 
     try {
       const center = siteGeometry.reduce(
@@ -60,24 +72,29 @@ export default function SiteAuditWorkspace() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: query.trim() || "Untitled Site",
+          name: query.trim() || "Untitled Industrial Site",
           countryCode: "CH",
           latitude: center.latitude,
           longitude: center.longitude,
           perimeterMeters: metrics.perimeterMeters,
           areaSquareMeters: metrics.areaSquareMeters,
           perimeter: siteGeometry,
-          metadata: { source: "site-audit", market: "Switzerland" }
+          metadata: {
+            source: "address-driven-site-discovery",
+            market: "Switzerland",
+            searchQuery: query.trim(),
+            discoveredLocation: siteLocation
+          }
         })
       });
 
       if (!response.ok) throw new Error("Save failed");
       const result = await response.json();
       setSiteId(result.data.id);
-      setStatus("Site saved");
+      setStatus("Digital Site Twin created");
     } catch (error) {
       console.error(error);
-      setStatus("Unable to save site");
+      setStatus("Unable to create Digital Site Twin");
     } finally {
       setSaving(false);
     }
@@ -91,33 +108,49 @@ export default function SiteAuditWorkspace() {
       <header className="audit-header">
         <div>
           <p className="eyebrow">SENTINEL / SITE AUDIT</p>
-          <h1>Geospatial Security Workspace</h1>
+          <h1>Geo-Video Security Audit</h1>
         </div>
         <button className="primary-button" type="button" onClick={saveSite} disabled={saving || !siteGeometry}>
-          {saving ? "Saving..." : "Save Site"}
+          {saving ? "Creating..." : "Create Digital Site Twin"}
         </button>
       </header>
 
       <section className="audit-workspace">
         <aside className="side-panel left-panel">
-          <h2>Site</h2>
+          <h2>Start New Site Audit</h2>
           <label>
-            Search
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Address, site name, or coordinates" onKeyDown={(event) => event.key === "Enter" && locateSite()} />
+            Industrial facility address or company name
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Enter address, facility, or company"
+              onKeyDown={(event) => event.key === "Enter" && discoverSite()}
+            />
           </label>
           <div className="tool-group">
-            <button type="button" onClick={locateSite}>Locate Site</button>
-            <button type="button" onClick={drawPerimeter}>Draw Perimeter</button>
+            <button type="button" className="primary-button" onClick={discoverSite} disabled={!query.trim()}>Locate &amp; Analyze</button>
+            <button type="button" onClick={() => mapRef.current?.enableMapSelection()}>Select on Map</button>
+            <button type="button" onClick={drawPerimeter} disabled={!siteLocation}>Define / Edit Boundary</button>
             <button type="button" onClick={clearAudit}>Clear Audit</button>
           </div>
-          <p className="tool-hint">Perimeter drawing: click to add vertices, then double-click to finish.</p>
+          <p className="tool-hint">Enter a facility address or company name. Sentinel will locate the site first; then review or define the boundary before creating the Digital Site Twin.</p>
+
+          {siteLocation && (
+            <div className="discovery-card">
+              <strong>Site Discovery</strong>
+              <span>{siteLocation.displayName || query}</span>
+              <span>{Number(siteLocation.latitude).toFixed(6)}, {Number(siteLocation.longitude).toFixed(6)}</span>
+            </div>
+          )}
+
           <div className="site-data">
             <span>Status</span><strong>{status}</strong>
             <span>Market</span><strong>Switzerland</strong>
-            <span>Site ID</span><strong>{siteId || "Not saved"}</strong>
+            <span>Site ID</span><strong>{siteId || "Not created"}</strong>
             <span>Perimeter</span><strong>{perimeter}</strong>
             <span>Area</span><strong>{area}</strong>
           </div>
+
           {siteId && <>
             <SecurityObjectPanel siteId={siteId} />
             <FindingPanel siteId={siteId} onCreated={(finding) => setFindingId(finding.id)} />
@@ -130,12 +163,14 @@ export default function SiteAuditWorkspace() {
         </div>
 
         <aside className="side-panel right-panel">
-          <h2>Layers</h2>
+          <h2>Evidence Layers</h2>
           <label className="check-row"><input type="checkbox" defaultChecked /> Satellite imagery</label>
           <label className="check-row"><input type="checkbox" defaultChecked /> Terrain</label>
+          <label className="check-row"><input type="checkbox" /> Aerial imagery</label>
+          <label className="check-row"><input type="checkbox" /> Street-level imagery</label>
           <label className="check-row"><input type="checkbox" /> 3D buildings</label>
           <label className="check-row"><input type="checkbox" /> Roads</label>
-          <label className="check-row"><input type="checkbox" defaultChecked /> Site perimeter</label>
+          <label className="check-row"><input type="checkbox" /> Public photos</label>
           <hr />
           <h2>Security Layers</h2>
           <label className="check-row"><input type="checkbox" /> Vehicle access</label>
@@ -144,6 +179,9 @@ export default function SiteAuditWorkspace() {
           <label className="check-row"><input type="checkbox" /> Road blockers</label>
           <label className="check-row"><input type="checkbox" /> Turnstiles</label>
           <label className="check-row"><input type="checkbox" /> CCTV / ANPR</label>
+          <hr />
+          <h2>Audit Intelligence</h2>
+          <p className="tool-hint">Observed → Inferred → Validated. Every finding should retain its evidence and provenance.</p>
         </aside>
       </section>
     </main>
