@@ -1,0 +1,38 @@
+[
+  {
+    "ruleId": "vehicle-access-standard",
+    "findingTypes": ["Uncontrolled Vehicle Access", "Security Coverage Gap"],
+    "requiredObjectTypes": ["vehicle_gate", "access_point"],
+    "preferredCategories": ["vehicle_barrier"],
+    "siteConditions": ["industrial_area", "administrative_area", "parking"],
+    "priority": "medium",
+    "notes": "Use site geometry, opening width, traffic intensity and operating cycle requirements before selecting a model."
+  },
+  {
+    "ruleId": "vehicle-access-intensive",
+    "findingTypes": ["Uncontrolled Vehicle Access", "Security Coverage Gap"],
+    "requiredObjectTypes": ["vehicle_gate", "barrier", "access_point"],
+    "preferredCategories": ["vehicle_barrier"],
+    "siteConditions": ["industrial_area", "high_traffic", "continuous_operation"],
+    "priority": "high",
+    "notes": "Prefer products whose verified duty cycle and application match the observed traffic conditions."
+  },
+  {
+    "ruleId": "pedestrian-access",
+    "findingTypes": ["Weak Pedestrian Access", "Security Coverage Gap"],
+    "requiredObjectTypes": ["pedestrian_gate", "turnstile", "access_point"],
+    "preferredCategories": ["pedestrian_access"],
+    "siteConditions": ["industrial_site", "high_security"],
+    "priority": "medium",
+    "notes": "Validate pedestrian throughput, access-control integration and security requirements."
+  },
+  {
+    "ruleId": "parking-modernization",
+    "findingTypes": ["Security Coverage Gap", "Vehicle access control modernization"],
+    "requiredObjectTypes": ["vehicle_gate", "parking", "access_point"],
+    "preferredCategories": ["parking_system", "vehicle_barrier"],
+    "siteConditions": ["parking", "public_parking"],
+    "priority": "medium",
+    "notes": "Consider LPR, payment, remote management and central control requirements when applicable."
+  }
+]
