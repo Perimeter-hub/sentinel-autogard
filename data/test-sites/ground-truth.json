@@ -1,0 +1,8 @@
+{
+  "version": "0.1",
+  "sites": [
+    {"id":"cz-skoda-mlada-boleslav","checks":[{"id":"site-identity","type":"identity","expected":"Škoda Auto Mladá Boleslav","severity":"critical"},{"id":"known-gate-1","type":"access_point","expected":"Gate 1","severity":"high"},{"id":"known-gate-3","type":"access_point","expected":"Gate 3","severity":"high"},{"id":"known-gate-8","type":"access_point","expected":"Gate 8","severity":"high"}]},
+    {"id":"cz-hyundai-nosovice","checks":[{"id":"site-identity","type":"identity","expected":"Hyundai Motor Manufacturing Czech","severity":"critical"},{"id":"personal-gate","type":"access_point","expected":"Personal Gate","severity":"high"}]},
+    {"id":"cz-continental-barum-otrokovice","checks":[{"id":"site-identity","type":"identity","expected":"Continental Barum Otrokovice","severity":"critical"}]}
+  ]
+}
