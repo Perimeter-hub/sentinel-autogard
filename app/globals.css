@@ -27,6 +27,8 @@ h1 { margin: 0; font-size: clamp(32px, 5vw, 64px); }
 .side-panel textarea { resize: vertical; }
 .tool-group { display: grid; gap: 8px; margin: 18px 0 10px; }
 .tool-hint { margin: 0 0 22px; font-size: 11px; line-height: 1.5; opacity: .55; }
+.discovery-card { display: grid; gap: 6px; margin: 0 0 20px; padding: 12px; border: 1px solid #294254; background: #0a141c; font-size: 11px; line-height: 1.4; }
+.discovery-card strong { font-size: 12px; }
 .site-data { display: grid; grid-template-columns: .8fr 1.2fr; gap: 12px 10px; font-size: 12px; }
 .site-data span { opacity: .55; }
 .site-data strong { overflow-wrap: anywhere; }
