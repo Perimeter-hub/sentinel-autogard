@@ -12,6 +12,8 @@ services:
     volumes:
       - sentinel_postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./db/002_site_intelligence.sql:/docker-entrypoint-initdb.d/002-site-intelligence.sql:ro
+      - ./db/003_api_compatibility.sql:/docker-entrypoint-initdb.d/003-api-compatibility.sql:ro
 
 volumes:
   sentinel_postgres_data:
