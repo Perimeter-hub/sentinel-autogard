@@ -1,0 +1,29 @@
+[
+  {
+    "id": "cz-skoda-mlada-boleslav",
+    "name": "Škoda Auto Mladá Boleslav",
+    "address": "tř. Václava Klementa 869, 293 01 Mladá Boleslav, Czech Republic",
+    "countryCode": "cz",
+    "source": "Official company address",
+    "sourceUrl": "https://www.skoda-auto.cz/o-spolecnosti/zakladni-udaje",
+    "testPurpose": ["large automotive plant", "multiple access points", "perimeter analysis"]
+  },
+  {
+    "id": "cz-hyundai-nosovice",
+    "name": "Hyundai Motor Manufacturing Czech — Nošovice",
+    "address": "Hyundai 700/1, 739 51 Nižní Lhoty, Czech Republic",
+    "countryCode": "cz",
+    "source": "Official plant address",
+    "sourceUrl": "https://www.hyundai-motor.cz/en/contacts/address-and-invoice-details/",
+    "testPurpose": ["large automotive plant", "vehicle access", "industrial perimeter"]
+  },
+  {
+    "id": "cz-continental-barum-otrokovice",
+    "name": "Continental Barum — Otrokovice",
+    "address": "Objízdná 1628, 765 02 Otrokovice, Czech Republic",
+    "countryCode": "cz",
+    "source": "Official company location",
+    "sourceUrl": "https://www.continental.com/cs-cz/karriere/lokality/otrokovice/",
+    "testPurpose": ["large manufacturing site", "vehicle access", "industrial perimeter"]
+  }
+]

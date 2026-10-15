@@ -1,0 +1,10 @@
+[
+  {"questionId":"vehicle-traffic-intensity","objectTypes":["vehicle_gate","barrier","access_point"],"parameter":"trafficIntensity","label":"What is the approximate vehicle traffic intensity?","type":"select","options":["low","medium","high","continuous"]},
+  {"questionId":"vehicle-cycles-day","objectTypes":["vehicle_gate","barrier"],"parameter":"cyclesPerDay","label":"Approximate barrier cycles per day","type":"number","unit":"cycles/day"},
+  {"questionId":"opening-width","objectTypes":["vehicle_gate","barrier","road_blocker"],"parameter":"openingWidthM","label":"Required clear opening width","type":"number","unit":"m"},
+  {"questionId":"operating-hours","objectTypes":["vehicle_gate","barrier"],"parameter":"operatingHours","label":"Operating schedule","type":"select","options":["business_hours","extended_hours","24/7"]},
+  {"questionId":"arm-length","objectTypes":["vehicle_gate","barrier"],"parameter":"armLengthM","label":"Estimated required arm length","type":"number","unit":"m"},
+  {"questionId":"pedestrian-throughput","objectTypes":["pedestrian_gate","turnstile","access_point"],"parameter":"peoplePerHour","label":"Peak pedestrian throughput","type":"number","unit":"people/hour"},
+  {"questionId":"access-control","objectTypes":["pedestrian_gate","turnstile","access_point"],"parameter":"accessControlRequired","label":"Is electronic access control required?","type":"boolean"},
+  {"questionId":"parking-spaces","objectTypes":["parking"],"parameter":"parkingSpaces","label":"Approximate parking capacity","type":"number","unit":"spaces"}
+]

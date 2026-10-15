@@ -1,0 +1,23 @@
+[
+  {
+    "requirementId": "vehicle-barrier-duty",
+    "objectTypes": ["vehicle_gate", "barrier", "access_point"],
+    "parameters": ["trafficIntensity", "cyclesPerDay", "openingWidthM", "operatingHours", "armLengthM"],
+    "productCategory": "vehicle_barrier",
+    "rule": "Do not recommend a model until required duty cycle and physical span are known or explicitly marked as assumptions."
+  },
+  {
+    "requirementId": "pedestrian-access-control",
+    "objectTypes": ["pedestrian_gate", "turnstile", "access_point"],
+    "parameters": ["peoplePerHour", "accessControlRequired", "bidirectional", "securityLevel"],
+    "productCategory": "pedestrian_access",
+    "rule": "Validate throughput and access-control requirements before product selection."
+  },
+  {
+    "requirementId": "parking-system",
+    "objectTypes": ["parking", "vehicle_gate", "access_point"],
+    "parameters": ["parkingSpaces", "lprRequired", "paymentRequired", "remoteManagementRequired"],
+    "productCategory": "parking_system",
+    "rule": "Select a parking system only when the required control and management functions are identified."
+  }
+]

@@ -1,0 +1,35 @@
+name: Site Audit Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app/api/**'
+      - 'data/test-sites/**'
+      - 'data/autogard/**'
+      - 'components/site-audit/**'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Start application
+        run: |
+          npm run start > /tmp/sentinel.log 2>&1 &
+          npx wait-on http://127.0.0.1:3000
+      - name: Run three-site benchmark
+        run: node scripts/run-site-audit-benchmark.mjs
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-audit-benchmark
+          path: benchmark-results/*.json

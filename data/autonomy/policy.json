@@ -1,0 +1,11 @@
+{
+  "version": "0.1",
+  "rules": [
+    {"id":"high-confidence-context","domain":"context","minConfidence":0.90,"action":"auto_accept"},
+    {"id":"medium-confidence-context","domain":"context","minConfidence":0.70,"maxConfidence":0.899,"action":"review_queue"},
+    {"id":"low-confidence-context","domain":"context","maxConfidence":0.699,"action":"review_queue"},
+    {"id":"security-critical","domain":"security","action":"mandatory_human_validation"},
+    {"id":"boundary","domain":"site_boundary","action":"mandatory_human_validation"},
+    {"id":"product-recommendation","domain":"product","action":"recommend_only_engineering_validation_required"}
+  ]
+}
