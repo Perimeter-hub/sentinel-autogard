@@ -15,6 +15,13 @@ CREATE TABLE IF NOT EXISTS site_assets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- database/schema.sql may create an earlier site_assets version; extend it compatibly.
+ALTER TABLE site_assets ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE site_assets ADD COLUMN IF NOT EXISTS captured_at TIMESTAMPTZ;
+ALTER TABLE site_assets ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE site_assets ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+ALTER TABLE site_assets ADD COLUMN IF NOT EXISTS file_uri TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_site_assets_site_id ON site_assets(site_id);
 CREATE INDEX IF NOT EXISTS idx_site_assets_type ON site_assets(asset_type);
 CREATE INDEX IF NOT EXISTS idx_site_assets_location ON site_assets(latitude, longitude);
